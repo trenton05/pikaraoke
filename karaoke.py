@@ -39,6 +39,7 @@ class Karaoke:
     is_paused = True
     process = None
     qr_code_path = None
+    wifi_code_path = None
     base_path = os.path.dirname(__file__)
     volume_offset = 0
     loop_interval = 500  # in milliseconds
@@ -172,6 +173,7 @@ class Karaoke:
         self.kill_player()
 
         self.generate_qr_code()
+        self.generate_wifi_code()
         if self.use_vlc:
             if (self.show_overlay):
                 self.vlcclient = vlcclient.VLCClient(port=self.vlc_port, path=self.vlc_path, qrcode=self.qr_code_path, url=self.url)
@@ -270,6 +272,19 @@ class Karaoke:
         self.qr_code_path = os.path.join(self.base_path, "qrcode.png")
         img.save(self.qr_code_path)
 
+    def generate_wifi_code(self):
+        logging.debug("Generating URL QR code")
+        qr = qrcode.QRCode(
+            version=1,
+            box_size=1,
+            border=4,
+        )
+        qr.add_data("WIFI:S:Albrecht-Network;T:WPA;P:trentontawny;;")
+        qr.make()
+        img = qr.make_image()
+        self.wifi_code_path = os.path.join(self.base_path, "wificode.png")
+        img.save(self.wifi_code_path)
+
     def get_default_display_mode(self):
         if self.use_vlc:
             if self.platform == "raspberry_pi":
@@ -350,6 +365,10 @@ class Karaoke:
                 p_image = pygame.image.load(self.qr_code_path)
                 p_image = pygame.transform.scale(p_image, (150, 150))
                 self.screen.blit(p_image, (20, blitY - 125))
+                
+                w_image = pygame.image.load(self.wifi_code_path)
+                w_image = pygame.transform.scale(w_image, (150, 150))
+                self.screen.blit(w_image, (20, blitY - 325))
                 if not self.is_network_connected():
                     text = self.font.render(
                         "Wifi/Network not connected. Shutting down in 10s...",
@@ -367,6 +386,10 @@ class Karaoke:
                         "Connect at: " + self.url, True, (255, 255, 255)
                     )
                     self.screen.blit(text, (p_image.get_width() + 35, blitY))
+                    text = self.font.render(
+                        "Wifi: Albrecht-Network / trentontawny", True, (255, 255, 255)
+                    )
+                    self.screen.blit(text, (w_image.get_width() + 35, blitY - 200))
 
             if not self.hide_raspiwifi_instructions and (
                 self.raspi_wifi_config_installed
