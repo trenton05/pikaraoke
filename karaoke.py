@@ -23,6 +23,7 @@ from lib.get_platform import get_platform
 if get_platform() != "windows":
     from signal import SIGALRM, alarm, signal
 
+from requests import get
 
 class Karaoke:
 
@@ -157,6 +158,12 @@ class Karaoke:
                     logging.debug("Couldn't get IP, retrying....")
                 else:
                     break
+            try:    
+                PUBLIC_IP = get("https://api.ipify.org").content.decode('utf8')
+                get("http://" + PUBLIC_IP + ":" + self.port)
+                self.ip = PUBLIC_IP
+            except Exception:
+                pass
         else:
             self.ip = self.get_ip()
 
